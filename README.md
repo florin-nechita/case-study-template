@@ -4,7 +4,7 @@ This project is a Spring Boot application that provides a RESTful API for managi
 
 ## Technologies Used
 
-- **Java 17**
+- **Java 21**
 - **Spring Boot**
 - **Spring Data JPA**
 - **PostgreSQL** - Primary database
@@ -28,7 +28,7 @@ The application follows a standard layered architecture:
 ### Prerequisites
 
 - Docker and Docker Compose
-- Java 17 or later
+- Java 21 or later
 - Maven
 
 ### Running the Application
