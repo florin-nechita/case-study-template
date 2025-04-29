@@ -96,6 +96,7 @@ public class OrderServiceImpl implements OrderService {
         // throw validation error in case any count > 1
     }
 
+    @Transactional
     private Map<String, Integer> reserveStock(Order newOrderRequest) {
         // create map with all product ids and their count
         // call productRepository.reserveStock(productId, count) for each product, make sure to throw exception if not enough stock
