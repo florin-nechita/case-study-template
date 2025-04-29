@@ -1,7 +1,7 @@
 package com.rohlikgroup.casestudy.service;
 
-import com.rohlikgroup.casestudy.dto.OrderDto;
 import com.rohlikgroup.casestudy.dto.CreateOrderRequest;
+import com.rohlikgroup.casestudy.dto.OrderDto;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -31,4 +31,11 @@ public interface OrderService {
      */
     OrderDto setOrderPaid(Long orderId);
 
+    /**
+     * Creates a new order.
+     *
+     * @param order the order to create
+     * @return the created order
+     */
+    OrderDto createOrder(OrderDto order);
 }
