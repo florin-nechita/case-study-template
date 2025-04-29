@@ -1,0 +1,7 @@
+### Cancel an order by ID
+POST http://localhost:8080/orders/1/cancel
+Content-Type: application/json
+
+### Pay for an order by ID
+POST http://localhost:8080/orders/2/pay
+Content-Type: application/json

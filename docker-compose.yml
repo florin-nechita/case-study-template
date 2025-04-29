@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres
+    container_name: rohlik-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: rohlik
+      POSTGRES_USER: rohlik
+      POSTGRES_PASSWORD: rohlik
+    ports:
+      - "5432:5432"
+  redis:
+    image: redis:7
+    container_name: rohlik-redis
+    restart: always
+    ports:
+      - "6379:6379"
