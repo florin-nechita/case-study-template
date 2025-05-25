@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -29,9 +30,9 @@ public class OrderController {
         return ResponseEntity.ok(paidOrder);
     }
 
-    @PostMapping
-    public ResponseEntity<OrderDto> createOrder(OrderDto orderDTO) {
-        var createdOrder = orderService.createOrder(orderDTO);
+    @PostMapping("/")
+    public ResponseEntity<OrderDto> createOrder(@RequestBody OrderDto order) {
+        var createdOrder = orderService.createOrder(order);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdOrder);
     }
 }

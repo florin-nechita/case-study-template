@@ -2,11 +2,13 @@ package com.rohlikgroup.casestudy.service.impl;
 
 import com.rohlikgroup.casestudy.dto.CreateOrderRequest;
 import com.rohlikgroup.casestudy.dto.OrderDto;
+import com.rohlikgroup.casestudy.dto.OrderItemDto;
+import com.rohlikgroup.casestudy.dto.ProductDto;
 import com.rohlikgroup.casestudy.entity.Order;
 import com.rohlikgroup.casestudy.entity.OrderItem;
 import com.rohlikgroup.casestudy.entity.OrderStatus;
+import com.rohlikgroup.casestudy.entity.Product;
 import com.rohlikgroup.casestudy.mapper.OrderMapper;
-import com.rohlikgroup.casestudy.mapper.OrderRequestMapperImpl;
 import com.rohlikgroup.casestudy.repository.OrderRepository;
 import com.rohlikgroup.casestudy.repository.ProductRepository;
 import com.rohlikgroup.casestudy.service.OrderService;
@@ -16,8 +18,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,8 +30,6 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final OrderMapper orderMapper;
-    private final OrderRequestMapperImpl orderRequestMapper;
-
 
     @Override
     @Transactional
@@ -72,13 +74,12 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public OrderDto createOrder(OrderDto orderRequest) {
+        validateRequest(orderRequest);
 
-        Order newOrderRequest = orderRequestMapper.mapOrderDtoToEntity(orderRequest);
-        validateRequest(newOrderRequest);
-
+        Map<String, Integer> reservedStock = new HashMap<>();
         try {
-            Map<String, Integer> reservedStock = reserveStock(newOrderRequest);
-            Order newOrderEntity = createOrderEntity(newOrderRequest);
+            reservedStock = reserveStock(orderRequest);
+            Order newOrderEntity = createOrderEntity(orderRequest);
             return orderMapper.map(orderRepository.save(newOrderEntity));
         } catch (Exception e) {
             // release stock in case of error
@@ -87,17 +88,21 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    private void validateRequest(Order newOrderRequest) {
-        validateProductCount(newOrderRequest);
+    private void validateRequest(OrderDto orderRequest) {
+        validateProductCount(orderRequest);
     }
 
-    private void validateProductCount(Order newOrderRequest) {
-        // create map with all product ids and their count
-        // throw validation error in case any count > 1
+    private void validateProductCount(OrderDto orderRequest) {
+        Map<Long, List<ProductDto>> productsById = orderRequest.orderItems().stream().map(OrderItemDto::product).collect(Collectors.groupingBy(ProductDto::id));
+        productsById.entrySet().stream().filter(productsForId -> productsForId.getValue().size() > 1).findAny().ifPresent(this::throwProductCountValidationError);
+    }
+
+    private void throwProductCountValidationError(Map.Entry<Long, List<ProductDto>> productsForId) {
+        throw new IllegalArgumentException("Product with id: " + productsForId.getKey() + " must appear only once. Found: " + productsForId.getValue().size() + " occurrences.");
     }
 
     @Transactional
-    private Map<String, Integer> reserveStock(Order newOrderRequest) {
+    private Map<String, Integer> reserveStock(OrderDto newOrderRequest) {
         // create map with all product ids and their count
         // call productRepository.reserveStock(productId, count) for each product, make sure to throw exception if not enough stock
         return null;
@@ -107,23 +112,29 @@ public class OrderServiceImpl implements OrderService {
         // release all stock which was previously reserved, as per the input
     }
 
-    private Order createOrderEntity(Order newOrderRequest) {
+    private Order createOrderEntity(OrderDto newOrderRequest) {
         Order orderEntity = new Order();
 
         orderEntity.setStatus(OrderStatus.PENDING);
-        orderEntity.setOrderItems(newOrderRequest.getOrderItems().stream().map(this::createOrderItemEntity).toList());
+        orderEntity.setOrderItems(createOrderItemEntities(newOrderRequest));
 
         return orderEntity;
     }
 
-    private List<OrderItem> createOrderItemEntity(OrderItem newOrderItemRequest, Order orderEntity) {
-        // TODO
+    private List<OrderItem> createOrderItemEntities(OrderDto orderRequest) {
+        return orderRequest.orderItems().stream().map(oi -> createSingleOrderItemEntity(oi, orderRequest)).toList();
+    }
+
+    private OrderItem createSingleOrderItemEntity(OrderItemDto newOrderItemRequest, OrderDto orderEntity) {
         OrderItem orderItemEntity = new OrderItem();
 
-        orderItemEntity.setOrder(orderEntity);
-        orderItemEntity.setProduct(newOrderItemRequest.getProduct());
-        orderItemEntity.setQuantity(newOrderItemRequest.getQuantity());
+        orderItemEntity.setProduct(createProduct(newOrderItemRequest.product()));
+        orderItemEntity.setQuantity(newOrderItemRequest.quantity());
 
         return orderItemEntity;
+    }
+
+    private Product createProduct(ProductDto product) {
+        return null;
     }
 }
